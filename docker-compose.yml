@@ -1,0 +1,62 @@
+version: "3.2"
+
+networks:
+  my_network:
+
+services:
+
+  mysql:
+    image: mysql:5.7
+    hostname: mysql
+    environment:
+      - MYSQL_DATABASE=main_schema
+      - MYSQL_USER=user1
+      - MYSQL_PASSWORD=user1password
+      - MYSQL_ROOT_PASSWORD=secretpassword
+    ports:
+      - 3306
+    networks:
+      my_network:
+    volumes:
+      - type: bind
+        source: ./mysql-init
+        target: /docker-entrypoint-initdb.d
+
+  s3:
+    image: localstack/localstack
+    hostname: s3localstack
+    ports:
+      - 8080:4572 #s3
+    networks:
+      my_network:
+    environment:
+      - SERVICES=s3
+      - DATA_DIR=/tmp/s3data
+    env_file:
+      - ./localstack.env
+    volumes:
+      - ./localstack_s3/init:/docker-entrypoint-initaws.d
+
+  prestodb:
+    image: oriy/prestodb-hdp2.6-hive-mysql-s3
+    hostname: prestodb
+    depends_on:
+      - mysql
+      - s3
+    extra_hosts:
+      - "hadoop-master:127.0.0.1"
+      - "hive-metastore:127.0.0.1"
+      - "presto-coordinator:127.0.0.1"
+    ports:
+      - 63306:3306
+      - 9083:9083
+      - 8889:8080
+    networks:
+      my_network:
+    links:
+      - s3:s3localstack
+    healthcheck:
+      test: "./presto-cli --catalog hive --schema default --execute 'show tables;'"
+      interval: 5s
+      timeout: 5s
+      retries: 5

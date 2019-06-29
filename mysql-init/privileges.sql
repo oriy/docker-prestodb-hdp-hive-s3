@@ -1,0 +1,3 @@
+CREATE DATABASE IF NOT EXISTS `presto_test` ;
+GRANT ALL PRIVILEGES ON presto_test.* TO 'user1'@'%' IDENTIFIED BY 'user1password';
+FLUSH PRIVILEGES ;
