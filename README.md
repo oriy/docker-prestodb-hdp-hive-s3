@@ -3,6 +3,7 @@
 Based on https://hub.docker.com/r/prestodb/hdp2.6-hive
 
 A pseudo-distributed Hadoop image for testing Presto, based on the HDP distro.
+
 Additions:
 - mysql based hive metastore
 - memory catalog
